@@ -93,7 +93,6 @@ read -r -n 1 -p "Manifests have been created, press any key to continue to clust
 # copy ccoctl generated manifests and tls certs
 cp -v "$CCO_DIR"/output/manifests/* "$CLUSTER_NAME"/manifests/
 cp -av "$CCO_DIR"/output/tls "$CLUSTER_NAME"
-cp -v "$CCO_DIR"/output/service* "$CLUSTER_NAME"/
 
 ./openshift-install create cluster --dir "$CLUSTER_NAME" --log-level debug 2>&1 | tee -a "$CLUSTER_NAME".log
 
