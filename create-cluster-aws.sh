@@ -1,42 +1,35 @@
 #!/usr/bin/bash
-set -euo pipefail
 
 # override release image with custom release and create the cluster from supplied install-config
-export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=quay.io/openshift-release-dev/ocp-release:4.13.0-x86_64
-
-AWS_REGION=us-west-2
-
-# base domain for cluster creation, must be route53 dns zone
-BASE_DOMAIN="devcluster.openshift.com"
-
-# get pull secrets
-PULL_SECRET_PATH=~/.docker/config.json
-PULL_SECRET=$(python3 json-minify.py $PULL_SECRET_PATH)
+export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=quay.io/openshift-release-dev/ocp-release:4.16.0-ec.1-x86_64
 
 # generate a cluster name with username, date and 8 random hex
 CLUSTER_NAME=$(whoami)-$(date +"%Y%m%d")-$(echo $RANDOM | md5sum | head -c 8)
 export CLUSTER_NAME
 
+AWS_REGION=ap-south-1
+
+# get pull secrets
+PULL_SECRET_PATH=~/.docker/config.json
+PULL_SECRET=$(python3 json-minify.py $PULL_SECRET_PATH)
+
 # create an install-config in a directory
-mkdir "$CLUSTER_NAME"
-cat << EOF > "$CLUSTER_NAME"/install-config.yaml
+CLUSTER_DIR="clusters/$CLUSTER_NAME"
+mkdir -p "$CLUSTER_DIR"
+
+cat << EOF > "$CLUSTER_DIR"/install-config.yaml
 apiVersion: v1
-baseDomain: ${BASE_DOMAIN}
+baseDomain: devcluster.openshift.com
+# featureSet: "TechPreviewNoUpgrade"
 compute:
 - architecture: amd64
   hyperthreading: Enabled
   name: worker
-  platform:
-    aws:
-      type: r4.large
-  replicas: 3
+  replicas: 1
 controlPlane:
   architecture: amd64
   hyperthreading: Enabled
   name: master
-  platform:
-    aws:
-      type: r5.xlarge
   replicas: 3
 metadata:
   creationTimestamp: null
@@ -56,14 +49,18 @@ platform:
     region: ${AWS_REGION}
 publish: External
 pullSecret: '${PULL_SECRET}'
-# optional - add ssh key for VMs
 sshKey: |
   $(cat ~/.ssh/id_rsa.pub)
 EOF
 
-./openshift-install create manifests --dir "$CLUSTER_NAME" --log-level debug 2>&1 | tee "$CLUSTER_NAME".log
+# openshift-install
+installer_image="$(podman run --rm "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" image installer)"
+tmp_dir=$(mktemp -d)
+podman run --entrypoint sh -u root --rm -v "${tmp_dir}:/workdir:Z" "${installer_image}" -c "cp -rvf /bin/openshift-install /workdir"
+
+"${tmp_dir}/openshift-install" create manifests --dir "${CLUSTER_DIR}" --log-level debug 2>&1 | tee "$CLUSTER_NAME".log
 read -r -n 1 -p "Manifests have been created, press any key to continue to cluster creation step... "
-./openshift-install create cluster --dir "$CLUSTER_NAME" --log-level debug 2>&1 | tee -a "$CLUSTER_NAME".log
+"${tmp_dir}/openshift-install" create cluster --dir "${CLUSTER_DIR}" --log-level debug 2>&1 | tee -a "$CLUSTER_NAME".log
 
 # after cluster creation succeeds copy kubeconfig to ~/.kube/config
-cp -f "$CLUSTER_NAME"/auth/kubeconfig ~/.kube/config
+cp -f "$CLUSTER_DIR"/auth/kubeconfig ~/.kube/config

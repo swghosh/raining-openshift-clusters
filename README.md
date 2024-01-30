@@ -4,12 +4,12 @@ This repo contains bash scripts to help automate creation of OpenShift clusters 
 
 **Pre-requisites**:
 - `oc` cli installed and available in `$PATH`
-- `openshift-install` binary available in current directory (where you plan to run the(se) scripts)
+- `podman`
 - `ccoctl` binary available in current directory (this is only needed if you plan to use `*-sts.sh` scripts)
 - cloud provider cli setup with necessary authentication for eg. AWS credentials available to be inferred from current environment or GCP credentials gcloud default auth setup
 - necessary cloud provider quota required for spinning up cluster resources for OpenShift
 - `~/.docker/config.json` file on your system to contain the necessary pull secrets required for cluster creation
-- either `~/.ssh/google_compute_engine.pub` (for GCP) or `~/.ssh/google_compute_engine.pub` (for AWS, Azure) to be present on your system
+- either `~/.ssh/google_compute_engine.pub` (for GCP) or `~/.ssh/id_rsa.pub` (for AWS, Azure) to be present on your system
 
 You can download all these binaries either from: https://console.redhat.com/openshift/downloads or from our CI: https://amd64.ocp.releases.ci.openshift.org/
 

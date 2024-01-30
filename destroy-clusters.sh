@@ -1,11 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-USERNAME="$(whoami)"
-
 NUM_CLUSTERS_TO_KEEP=${1:-"0"}
-LOOKUP_DIR=${LOOKUP_DIR:-"."}
-CLUSTER_PREFIX=${CLUSTER_PREFIX:-"${USERNAME}""-"}
+LOOKUP_DIR=${LOOKUP_DIR:-"./clusters"}
+CLUSTER_PREFIX=${CLUSTER_PREFIX:-"$(whoami)-"}
 
 echo "Removing all clusters except for last" "$NUM_CLUSTERS_TO_KEEP"
 echo "Looking up cluster directories from" "$LOOKUP_DIR"
@@ -17,6 +15,7 @@ read -r -n 1 -p "Press any key to continue..."
 for CLUSTER_DIR in $CLUSTER_DIRS
 do
     echo "Prepare to destroy cluster:" "'$CLUSTER_DIR'"
-    ./openshift-install destroy cluster --dir "$CLUSTER_DIR" --log-level debug 
-    rm -rf "$CLUSTER_DIR" "$CLUSTER_DIR"".log"
+    if ./openshift-install destroy cluster --dir "$CLUSTER_DIR" --log-level debug; then
+        rm -rf "$CLUSTER_DIR" "$CLUSTER_DIR"".log"
+    fi
 done
