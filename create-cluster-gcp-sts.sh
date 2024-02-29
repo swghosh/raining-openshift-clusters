@@ -27,6 +27,9 @@ mkdir "$CLUSTER_NAME"
 CCO_DIR=cco-"$CLUSTER_NAME"
 mkdir "$CCO_DIR"
 
+oc adm release extract --command='openshift-install' ${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}
+oc adm release extract --command='ccoctl' ${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}
+
 # extract cco manifests
 oc adm release extract \
   --credentials-requests \

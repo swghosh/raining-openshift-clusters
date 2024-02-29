@@ -21,6 +21,9 @@ PULL_SECRET=$(python3 json-minify.py $PULL_SECRET_PATH)
 CLUSTER_NAME=$(whoami)-$(date +"%Y%m%d")-$(echo $RANDOM | md5sum | head -c 8)
 export CLUSTER_NAME
 
+oc adm release extract --command='openshift-install' ${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}
+oc adm release extract --command='ccoctl' ${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}
+
 # create an install-config in a directory
 mkdir "$CLUSTER_NAME"
 
