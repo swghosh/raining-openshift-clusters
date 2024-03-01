@@ -84,6 +84,7 @@ platform:
     cloudName: AzurePublicCloud
     outboundType: Loadbalancer
     region: $az_region
+    resourceGroupName: ${CLUSTER_NAME}
 publish: External
 pullSecret: '${PULL_SECRET}'
 sshKey: |
