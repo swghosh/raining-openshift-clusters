@@ -5,6 +5,8 @@ NUM_CLUSTERS_TO_KEEP=${1:-"0"}
 LOOKUP_DIR=${LOOKUP_DIR:-"./clusters"}
 CLUSTER_PREFIX=${CLUSTER_PREFIX:-"$(whoami)"}
 
+# --------------------
+
 echo "Removing all clusters except for last" "$NUM_CLUSTERS_TO_KEEP"
 echo "Looking up cluster directories from" "$LOOKUP_DIR"
 
