@@ -4,16 +4,15 @@ This repo contains bash scripts to help automate creation of OpenShift clusters 
 
 **Pre-requisites**:
 - `oc` cli installed and available in `$PATH`
-- `podman`
-- `ccoctl` binary available in current directory (this is only needed if you plan to use `*-sts.sh` scripts)
 - cloud provider cli setup with necessary authentication for eg. AWS credentials available to be inferred from current environment or GCP credentials gcloud default auth setup
 - necessary cloud provider quota required for spinning up cluster resources for OpenShift
 - `~/.docker/config.json` file on your system to contain the necessary pull secrets required for cluster creation
+    - or any other location would work for the pull secrets file, however you would need to set `PULL_SECRET_PATH` environment variable explicitly
 - either `~/.ssh/google_compute_engine.pub` (for GCP) or `~/.ssh/id_rsa.pub` (for AWS, Azure) to be present on your system
 
-You can download all these binaries either from: https://console.redhat.com/openshift/downloads or from our CI: https://amd64.ocp.releases.ci.openshift.org/
+You can download all these binaries either from: https://console.redhat.com/openshift/downloads or from our OpenShift CI: https://amd64.ocp.releases.ci.openshift.org/
 
-Before running each of the `.sh` scripts consider taking a look over the initial block of code in the script which contains values for certain environment variables. They have been filled with default values (yet wont work out of the box), but you would need to change them on the basis of your cloud provider resource names eg. cloud project, cloud region, base domain, etc.
+Before running each of the `.sh` scripts consider taking a look over the initial block of code in each of the script preceeding `# --------------------`, should contains description for each environment variable necessary for the cluster creation to run. They have been filled with default values (yet wont work out of the box), instead you need to set those variables in your environment (i.e. either before calling the script or by creating a wrapper script which contains exact values of the required variables) especially, the cloud provider resource ids eg. cloud project, cloud region, base domain, etc.
 
 # Amazon Web Services (AWS)
 
@@ -28,7 +27,7 @@ Before running each of the `.sh` scripts consider taking a look over the initial
 # Microsoft Azure
 
 - `./create-cluster-az.sh`: create an IPI provisioned OpenShift cluster on Azure public cloud
-- `./create-cluster-az.sh`: create an IPI provisioned OpenShift cluster on [Azure with short-term credentials with Active Directory (AD) Workload Identity](https://docs.openshift.com/container-platform/4.15/installing/installing_azure/installing-azure-customizations.html#installing-azure-with-short-term-creds_installing-azure-customizations)
+- `./create-cluster-az-sts.sh`: create an IPI provisioned OpenShift cluster on [Azure with short-term credentials with Active Directory (AD) Workload Identity](https://docs.openshift.com/container-platform/4.15/installing/installing_azure/installing-azure-customizations.html#installing-azure-with-short-term-creds_installing-azure-customizations)
 
 # Cleanup
 
