@@ -1,30 +1,39 @@
 #!/usr/bin/bash
 
-subscription_id="<REDACTED>" # add your Azure subscription id
-tenant_id="<REDACTED>" # add your Azure tenant id
-dns_resource_group="<REDACTED>" # add the rg where dns zone for baseDomain is present
-
-az_region="centralus"
-
-# azure pre-init
-# run this every week or so
-az login
-az ad sp create-for-rbac --role Owner --name "$(whoami)"-installer --scopes "/subscriptions/${subscription_id}"
-# IMPORTANT: Please ensure ~/.azure/osServicePrincipal.json contains a valid token!
-# Else, azure cannot authenticate. To avoid problems, rm ~/.azure/osServicePrincipal.json and 
-# fill subscription id, tenant id, client app id and client secret manually.
 
 # override release image with custom release and create the cluster from supplied install-config
-export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=quay.io/openshift-release-dev/ocp-release:4.16.0-ec.3-x86_64
+export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE:-"quay.io/openshift-release-dev/ocp-release:4.15.3-x86_64"}
+AZ_REGION=${AZ_REGION:-"centralus"}
+# base domain for cluster creation, must be Azure DNS zone
+BASE_DOMAIN=${BASE_DOMAIN:-"openshift.codecrafts.cf"}
+AZ_DNS_RESOURCE_GROUP=${AZ_DNS_RESOURCE_GROUP:-"dns-rg"}
+# path to file containing pull secrets
+PULL_SECRET_PATH=${PULL_SECRET_PATH:-"$HOME/.docker/config.json"}
+# azure subscription id, required!
+az_subscription_id=${az_subscription_id:-"invalid-subscription-id"}
+# azure tenant id, required!
+az_tenant_id=${az_tenant_id:-"invalid-tenant-id"}
+# whether to az login, default is true
+az_login=${az_login:-"1"}
+
+# --------------------
+
+# azure credentials pre-init
+# run this every few days or so,
+# the following az commands are not required if you already 
+# have a valid ~/.azure/osServicePrincipal.json present
+if [ "${az_login}" -eq "1" ]; then
+  az login
+  az ad sp create-for-rbac --role Owner --name "$(whoami)"-installer --scopes "/subscriptions/${az_subscription_id}"
+fi
 
 # generate a cluster name with username, date and 8 random hex
 CLUSTER_NAME=$(whoami)$(date +"%Y%m%d")$(echo $RANDOM | md5sum | head -c 8)
 export CLUSTER_NAME
-CLUSTER_DIR="clusters/${CLUSTER_NAME}"
 
-# get pull secrets
-PULL_SECRET_PATH=~/.docker/config.json
-PULL_SECRET=$(python3 json-minify.py $PULL_SECRET_PATH)
+# create an install-config in a directory
+CLUSTER_DIR="clusters/$CLUSTER_NAME"
+mkdir -p "$CLUSTER_DIR"
 
 # create directory for cloud credentials ccoctl
 CCO_DIR=clusters/cco-"$CLUSTER_NAME"
@@ -43,18 +52,20 @@ oc adm release extract --command='ccoctl' ${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVER
 # create cloud accounts and secrets
 ./ccoctl azure create-all \
     --name "$CLUSTER_NAME" \
-    --region "$az_region" \
-    --subscription-id "$subscription_id" \
-    --tenant-id "$tenant_id" \
+    --region "${AZ_REGION}" \
+    --subscription-id "$az_subscription_id" \
+    --tenant-id "$az_tenant_id" \
     --credentials-requests-dir "$CCO_DIR"/cred-reqs \
     --output-dir="$CCO_DIR"/output \
-    --dnszone-resource-group-name "$dns_resource_group"
+    --dnszone-resource-group-name "${AZ_DNS_RESOURCE_GROUP}"
+
+# get pull secrets
+PULL_SECRET=$(python3 json-minify.py "$PULL_SECRET_PATH")
 
 # create an install-config in a directory
-mkdir "${CLUSTER_DIR}"
 cat << EOF > "${CLUSTER_DIR}"/install-config.yaml
 apiVersion: v1
-baseDomain: catchall.azure.devcluster.openshift.com
+baseDomain: ${BASE_DOMAIN}
 credentialsMode: Manual
 compute:
 - architecture: amd64
@@ -80,10 +91,10 @@ networking:
   - 172.30.0.0/16
 platform:
   azure:
-    baseDomainResourceGroupName: $dns_resource_group
+    baseDomainResourceGroupName: ${AZ_DNS_RESOURCE_GROUP}
     cloudName: AzurePublicCloud
     outboundType: Loadbalancer
-    region: $az_region
+    region: ${AZ_REGION}
     resourceGroupName: ${CLUSTER_NAME}
 publish: External
 pullSecret: '${PULL_SECRET}'

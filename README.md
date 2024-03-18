@@ -28,7 +28,7 @@ Before running each of the `.sh` scripts consider taking a look over the initial
 # Microsoft Azure
 
 - `./create-cluster-az.sh`: create an IPI provisioned OpenShift cluster on Azure public cloud
-- `./create-cluster-az.sh`: create an IPI provisioned OpenShift cluster on [Azure with short-term credentials with Active Directory (AD) Workload Identity](https://docs.openshift.com/container-platform/4.15/installing/installing_azure/installing-azure-customizations.html#installing-azure-with-short-term-creds_installing-azure-customizations)
+- `./create-cluster-az-sts.sh`: create an IPI provisioned OpenShift cluster on [Azure with short-term credentials with Active Directory (AD) Workload Identity](https://docs.openshift.com/container-platform/4.15/installing/installing_azure/installing-azure-customizations.html#installing-azure-with-short-term-creds_installing-azure-customizations)
 
 # Cleanup
 
