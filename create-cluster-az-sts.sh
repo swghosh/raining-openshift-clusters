@@ -10,11 +10,9 @@ AZ_DNS_RESOURCE_GROUP=${AZ_DNS_RESOURCE_GROUP:-"dns-rg"}
 # path to file containing pull secrets
 PULL_SECRET_PATH=${PULL_SECRET_PATH:-"$HOME/.docker/config.json"}
 # azure subscription id, required!
-az_subscription_id=${az_subscription_id:-"invalid-subscription-id"}
-# azure tenant id, required!
-az_tenant_id=${az_tenant_id:-"invalid-tenant-id"}
+AZ_SUBSCRIPTION_ID=${AZ_SUBSCRIPTION_ID:-"invalid-subscription-id"}
 # whether to az login, default is true
-az_login=${az_login:-"1"}
+AZ_LOGIN=${AZ_LOGIN:-"1"}
 
 # --------------------
 
@@ -22,10 +20,43 @@ az_login=${az_login:-"1"}
 # run this every few days or so,
 # the following az commands are not required if you already 
 # have a valid ~/.azure/osServicePrincipal.json present
-if [ "${az_login}" -eq "1" ]; then
+if [ "${AZ_LOGIN}" -eq "1" ]; then
+  az_client_cred_tmp_dir="$(mktemp -d)"
+  
   az login
-  az ad sp create-for-rbac --role Owner --name "$(whoami)"-installer --scopes "/subscriptions/${az_subscription_id}"
+  az ad sp create-for-rbac --role Owner --name "$(whoami)"-installer --scopes "/subscriptions/${AZ_SUBSCRIPTION_ID}" > "$az_client_cred_tmp_dir"/az_credentials.json
+
+  # IMPORTANT: Please ensure ~/.azure/osServicePrincipal.json contains a valid token!
+  # Else, azure cannot authenticate. To avoid problems, rm ~/.azure/osServicePrincipal.json and 
+  # fill subscription id, tenant id, client app id and client secret manually from output of above command.
+
+  python3 - << EOF
+import json, os
+with open('${az_client_cred_tmp_dir}/az_credentials.json', 'r') as src_f:
+  az_creds = json.load(src_f)
+
+os_creds = {
+  "subscriptionId": "${AZ_SUBSCRIPTION_ID}",
+  "clientId": f"{az_creds['appId']}",
+  "clientSecret": f"{az_creds['password']}",
+  "tenantId": f"{az_creds['tenant']}"
+}
+
+os.makedirs("${HOME}/.azure", exist_ok=True)
+with open('${HOME}/.azure/osServicePrincipal.json', 'w') as dst_f:
+  json.dump(os_creds, dst_f)
+EOF
+
 fi
+
+AZ_TENANT_ID=$(python3 - << EOF
+import json
+
+with open('${HOME}/.azure/osServicePrincipal.json') as os_creds_f:
+  os_creds = json.load(os_creds_f)
+  print(os_creds['tenantId'])
+EOF
+)
 
 # generate a cluster name with username, date and 8 random hex
 CLUSTER_NAME=$(whoami)$(date +"%Y%m%d")$(echo $RANDOM | md5sum | head -c 8)
@@ -53,8 +84,8 @@ oc adm release extract --command='ccoctl' ${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVER
 ./ccoctl azure create-all \
     --name "$CLUSTER_NAME" \
     --region "${AZ_REGION}" \
-    --subscription-id "$az_subscription_id" \
-    --tenant-id "$az_tenant_id" \
+    --subscription-id "${AZ_SUBSCRIPTION_ID}" \
+    --tenant-id "${AZ_TENANT_ID}" \
     --credentials-requests-dir "$CCO_DIR"/cred-reqs \
     --output-dir="$CCO_DIR"/output \
     --dnszone-resource-group-name "${AZ_DNS_RESOURCE_GROUP}"
