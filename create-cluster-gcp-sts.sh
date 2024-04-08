@@ -31,7 +31,7 @@ gcloud iam service-accounts create "${CLUSTER_NAME}" --display-name="${CLUSTER_N
 SA_EMAIL="${CLUSTER_NAME}""@""${GCP_PROJECT}"".iam.gserviceaccount.com"
 
 while IFS= read -r ROLE_TO_ADD ; do
-   gcloud projects add-iam-policy-binding "${GCP_PROJECT}" --member="serviceAccount:${SA_EMAIL}" --role="$ROLE_TO_ADD"
+   gcloud projects add-iam-policy-binding "${GCP_PROJECT}" --member="serviceAccount:${SA_EMAIL}" --role="$ROLE_TO_ADD" --condition=None
 done << END_OF_ROLES
 roles/owner
 END_OF_ROLES
