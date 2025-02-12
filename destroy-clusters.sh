@@ -10,7 +10,15 @@ CLUSTER_PREFIX=${CLUSTER_PREFIX:-"$(whoami)"}
 echo "Removing all clusters except for last" "$NUM_CLUSTERS_TO_KEEP"
 echo "Looking up cluster directories from" "$LOOKUP_DIR"
 
-CLUSTER_DIRS=$(find "$LOOKUP_DIR" -maxdepth 1 -name "$CLUSTER_PREFIX""*" -type d -printf "%T@ %p\n" | sort | head -n -"$NUM_CLUSTERS_TO_KEEP" | cut -d " " -f2)
+if [ "$NUM_CLUSTERS_TO_KEEP" -gt 0 ]; then
+    NUM_CLUSTERS_TO_KEEP=" -n -${NUM_CLUSTERS_TO_KEEP} "
+else
+    NUM_CLUSTERS_TO_KEEP=""
+fi
+
+echo "$NUM_CLUSTERS_TO_KEEP"
+
+CLUSTER_DIRS=$(find "$LOOKUP_DIR" -maxdepth 1 -name "$CLUSTER_PREFIX""*" -type d -exec stat -f "%m %N" {} \; | sort | head"${NUM_CLUSTERS_TO_KEEP}"| cut -d " " -f2)
 echo "This operation is about to destroy" "$(echo "${CLUSTER_DIRS}" | wc -l)" "cluster(s)!!"
 read -r -n 1 -p "Press any key to continue..."
 
