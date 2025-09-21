@@ -13,6 +13,8 @@ PULL_SECRET_PATH=${PULL_SECRET_PATH:-"$HOME/.docker/config.json"}
 AZ_SUBSCRIPTION_ID=${AZ_SUBSCRIPTION_ID:-"invalid-subscription-id"}
 # whether to az login, default is true
 AZ_LOGIN=${AZ_LOGIN:-"1"}
+# whether to allow injecting custom manifests after install-config stage and before bootstrap stage
+INJECT_MANIFESTS=${INJECT_MANIFESTS:-"false"}
 
 # --------------------
 
@@ -134,7 +136,10 @@ sshKey: |
 EOF
 
 ./openshift-install create manifests --dir "${CLUSTER_DIR}" --log-level debug 2>&1 | tee "$CLUSTER_NAME".log
-read -r -n 1 -p "Manifests have been created, press any key to continue to cluster creation step... "
+
+if [ "$INJECT_MANIFESTS" = true ]; then
+  read -r -n 1 -p "Manifests have been created, press any key to continue to cluster creation step... "
+fi
 
 # copy ccoctl generated manifests and tls certs
 cp -v "$CCO_DIR"/output/manifests/* "${CLUSTER_DIR}"/manifests/
