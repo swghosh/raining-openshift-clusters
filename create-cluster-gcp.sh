@@ -27,6 +27,9 @@ gcloud iam service-accounts create "${CLUSTER_NAME}" --display-name="${CLUSTER_N
 
 SA_EMAIL="${CLUSTER_NAME}""@""${GCP_PROJECT}"".iam.gserviceaccount.com"
 
+# wait for service account to propagate before adding IAM bindings
+sleep 10
+
 while IFS= read -r ROLE_TO_ADD ; do
    gcloud projects add-iam-policy-binding "${GCP_PROJECT}" --member="serviceAccount:${SA_EMAIL}" --role="$ROLE_TO_ADD" --condition=None
 done << END_OF_ROLES
@@ -61,7 +64,7 @@ compute:
   name: worker
   platform:
     gcp:
-      type: e2-standard-2
+      type: n2-highmem-32
   replicas: 1
 controlPlane:
   architecture: amd64
@@ -69,7 +72,7 @@ controlPlane:
   name: master
   platform:
     gcp:
-      type: n2-standard-8
+      type: e2-standard-16
   replicas: 3
 metadata:
   creationTimestamp: null
