@@ -64,15 +64,15 @@ compute:
   name: worker
   platform:
     gcp:
-      type: n2-highmem-32
-  replicas: 1
+      type: e2-standard-2
+  replicas: 3
 controlPlane:
   architecture: amd64
   hyperthreading: Enabled
   name: master
   platform:
     gcp:
-      type: e2-standard-16
+      type: e2-standard-8
   replicas: 3
 metadata:
   creationTimestamp: null
