@@ -8,7 +8,7 @@ This repo contains bash scripts to help automate creation of OpenShift clusters 
 - necessary cloud provider quota required for spinning up cluster resources for OpenShift
 - `~/.docker/config.json` file on your system to contain the necessary pull secrets required for cluster creation
     - or any other location would work for the pull secrets file, however you would need to set `PULL_SECRET_PATH` environment variable explicitly
-- either `~/.ssh/google_compute_engine.pub` (for GCP) or `~/.ssh/id_rsa.pub` (for AWS, Azure) to be present on your system
+- either `~/.ssh/google_compute_engine.pub` (for GCP), `~/.ssh/id_rsa.pub` (for AWS, Azure), or `~/.ssh/id_ed25519.pub` (for IBM Cloud) to be present on your system
 
 You can download all these binaries either from: https://console.redhat.com/openshift/downloads or from our OpenShift CI: https://amd64.ocp.releases.ci.openshift.org/
 
@@ -28,6 +28,10 @@ Before running each of the `.sh` scripts consider taking a look over the initial
 
 - `./create-cluster-az.sh`: create an IPI provisioned OpenShift cluster on Azure public cloud
 - `./create-cluster-az-sts.sh`: create an IPI provisioned OpenShift cluster on [Azure with short-term credentials with Active Directory (AD) Workload Identity](https://docs.openshift.com/container-platform/4.15/installing/installing_azure/installing-azure-customizations.html#installing-azure-with-short-term-creds_installing-azure-customizations)
+
+# IBM Cloud
+
+- `./create-cluster-ibm.sh`: create an IPI provisioned OpenShift cluster on [IBM Cloud VPC with Manual mode cloud credentials](https://docs.openshift.com/container-platform/latest/installing/installing_ibm_cloud/installing-ibm-cloud-customizations.html). Uses `Manual` credentials mode to pre-provision credential secrets.
 
 # Cleanup
 
